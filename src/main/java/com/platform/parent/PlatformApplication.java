@@ -9,6 +9,7 @@ import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+//@SpringBootApplication(scanBasePackages = {"com.platform.parent","com.platform.parent.*"})
 @SpringBootApplication
 @EnableAutoConfiguration
 @EnableTransactionManagement

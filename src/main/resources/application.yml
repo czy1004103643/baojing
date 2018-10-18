@@ -7,7 +7,7 @@ spring:
       max-file-size: 100MB
       max-request-size: 200MB
   datasource:
-    url: jdbc:mysql://localhost:3306/platform?serverTimezone=GMT%2B8&characterEncoding=utf-8
+    url: jdbc:mysql://111.231.144.82:3306/platform?serverTimezone=GMT%2B8&characterEncoding=utf-8
     username: root
     password: TangChao083()
     driver-class-name: com.mysql.cj.jdbc.Driver
