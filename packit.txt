@@ -1,0 +1,2 @@
+mvn package  -Dmaven.test.skip=true
+copy target\mingxiao-1.0.war C:\Users\dengb\Downloads\apache-tomcat-9.0.0.M26\webapps\mingxiao.war /y

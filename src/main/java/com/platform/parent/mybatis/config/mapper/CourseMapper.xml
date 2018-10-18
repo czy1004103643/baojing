@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.platform.parent.mybatis.dao.CourseMapper">
+    <select id="findCourses" parameterType="long" resultType="com.platform.parent.mybatis.bean.Course">
+        SELECT * FROM course
+    </select>
+
+    <select id="countCourseById" parameterType="long" resultType="int">
+        SELECT count(1) FROM course WHERE id = #{id}
+    </select>
+
+    <select id="findCourseById" parameterType="long" resultType="com.platform.parent.mybatis.bean.Course">
+        SELECT * FROM course WHERE id = #{id}
+    </select>
+
+    <select id="findGroupPurchases" resultType="com.platform.parent.mybatis.bean.GroupPurchase">
+        SELECT  * FROM grouppurchase_view
+    </select>
+
+    <select id="countActiveGroupPurchases" parameterType="java.util.Map" resultType="int">
+        SELECT  count(*) FROM grouppurchase_view WHERE courseId = #{courseId} and membersCount = #{membersCount} and status != 3;
+    </select>
+
+    <select id="findGroupPurchaseById" parameterType="long" resultType="com.platform.parent.mybatis.bean.GroupPurchase">
+        SELECT  * FROM grouppurchase_view
+        WHERE id = #{id}
+    </select>
+
+    <select id="findGroupPurchaseByUnionid" parameterType="java.lang.String" resultType="com.platform.parent.mybatis.bean.GroupPurchase">
+        SELECT  *
+        FROM  grouppurchase_view
+        JOIN grouppurchasemember on grouppurchasemember.groupId = grouppurchase_view.id
+        WHERE grouppurchasemember.unionid = #{unionid}
+    </select>
+
+    <select id="findGroupPurchaseByCourseIdAndUnionid" parameterType="java.util.Map" resultType="com.platform.parent.mybatis.bean.GroupPurchase">
+        SELECT  *
+        FROM  grouppurchase_view
+        JOIN grouppurchasemember on grouppurchasemember.groupId = grouppurchase_view.id
+        WHERE courseId = #{courseId} and unionid = #{unionid}
+    </select>
+
+    <select id="findAvailableGroupPurchasesByCourseId" parameterType="long" resultType="com.platform.parent.mybatis.bean.GroupPurchase">
+        SELECT  *
+        FROM  grouppurchase_view
+        WHERE status = 1 and courseId = #{courseId}
+    </select>
+
+    <select id="findGroupPurchaseByCourseUnionidMemberCount" parameterType="java.util.Map" resultType="com.platform.parent.mybatis.bean.GroupPurchase">
+        SELECT  *
+        FROM grouppurchase
+        WHERE grouppurchase.owner = #{unionid} and grouppurchase.courseId = #{courseId} and grouppurchase.membersCount = #{membersCount}
+        AND grouppurchase.id NOT IN
+        (select id from grouppurchase_view)
+    </select>
+
+    <select id="findGroupPurchaseMembers" parameterType="long" resultType="com.platform.parent.mybatis.bean.GroupPurchaseMember">
+        SELECT grouppurchasemember.id, grouppurchasemember.unionid, grouppurchasemember.openid, grouppurchasemember.nickname,
+        grouppurchasemember.headimgurl, grouppurchasemember.groupId, grouppurchasemember.joined
+        from grouppurchase
+        JOIN grouppurchasemember on grouppurchasemember.groupId = grouppurchase.id
+        where grouppurchase.id = #{id}
+    </select>
+
+    <select id="countMemberByCourseIdAndUnionid" parameterType="java.util.Map" resultType="int">
+        SELECT count(1)
+        FROM grouppurchasemember
+        JOIN grouppurchase_view on grouppurchase_view.id = grouppurchasemember.groupId
+        WHERE grouppurchasemember.unionid = #{unionid} and grouppurchase_view.courseId = #{courseId}
+        and grouppurchase_view.membersCount = #{membersCount} and grouppurchase_view.status !=3
+    </select>
+
+    <insert id="addGroupPurchase" parameterType="com.platform.parent.mybatis.bean.GroupPurchase" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO groupPurchase (courseId, owner, membersCount, realMembersCount, price, created, deadline, realDeadline, status)
+        VALUES (#{courseId}, #{ownerUnionid}, #{membersCount}, #{realMembersCount}, #{price}, #{created}, #{deadline}, #{realDeadline}, #{status})
+    </insert>
+
+    <update id="updateGroupPurchase" parameterType="com.platform.parent.mybatis.bean.GroupPurchase">
+        UPDATE groupPurchase
+        SET status   = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <insert id="addGroupPurchaseMember" parameterType="com.platform.parent.mybatis.bean.GroupPurchaseMember" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO grouppurchasemember (unionid, openid, nickname, headimgurl, joined, groupId, channel, outTradeNo)
+        VALUES (#{unionid}, #{openid}, #{nickname}, #{headimgurl}, #{joined}, #{groupId}, #{channel}, #{outTradeNo})
+    </insert>
+
+    <select id="findCourseDetailById" parameterType="long" resultType="com.platform.parent.mybatis.bean.CourseDetail">
+        SELECT  level, audience, goal, outline
+        FROM  coursedetail
+        WHERE courseid = #{courseId}
+    </select>
+
+    <insert id="addGroupPurchasePayment" parameterType="com.platform.parent.mybatis.bean.GroupPurchasePayment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO grouppurchasepayment (openid, transaction_id, out_trade_no, cash_fee, total_fee, fee_type,
+                                          trade_type, device_info, time_end, is_subscribe, bank_type)
+        VALUES (#{openid}, #{transaction_id}, #{out_trade_no}, #{cash_fee}, #{total_fee}, #{fee_type},
+                #{trade_type}, #{device_info}, #{time_end}, #{is_subscribe}, #{bank_type})
+    </insert>
+
+    <select id="countGroupPurchasePayment" resultType="int">
+        SELECT  count(1) from grouppurchasepayment
+    </select>
+
+    <select id="countGroupPurchasePaymentByOpenid" parameterType="java.lang.String" resultType="int">
+        SELECT count(1) FROM grouppurchasepayment WHERE openid = #{openid}
+    </select>
+
+    <select id="countGroupPurchaseRefundByOpenid" parameterType="java.lang.String" resultType="int">
+        SELECT count(distinct payment.transaction_id) FROM grouppurchasepayment payment
+        join grouppurchaserefund refund on payment.transaction_id = refund.transaction_id and openid = #{openid};
+    </select>
+
+    <select id="countGroupPurchaseMember" resultType="int">
+        SELECT  count(1) from grouppurchasemember
+    </select>
+
+    <select id="countGroupPurchasePurchaseMemberByOpenid" parameterType="java.lang.String" resultType="int">
+        SELECT count(1) FROM grouppurchasemember WHERE openid = #{openid}
+    </select>
+
+    <delete id="deleteGroupPurchaseMember">
+        DELETE FROM grouppurchasemember WHERE id != 0
+    </delete>
+
+    <delete id="deleteGroupPurchase">
+        DELETE FROM grouppurchase WHERE id != 0
+    </delete>
+
+    <insert id="addGroupPurchaseRefund" parameterType="com.platform.parent.mybatis.bean.GroupPurchaseRefund" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO grouppurchaserefund (transaction_id, out_refund_no, out_trade_no, refund_id, total_fee, cash_fee,
+        refund_fee, cash_refund_fee, coupon_refund_fee, coupon_refund_count, refund_channel)
+        VALUES (#{transaction_id}, #{out_refund_no}, #{out_refund_no}, #{refund_id}, #{total_fee}, #{cash_fee},
+        #{refund_fee}, #{cash_refund_fee}, #{coupon_refund_fee}, #{coupon_refund_count}, #{refund_channel})
+    </insert>
+
+    <select id="findGroupPurchaseRefund" resultType="com.platform.parent.mybatis.bean.GroupPurchaseRefund">
+        SELECT * from grouppurchaserefund;
+    </select>
+
+    <select id="findGroupPurchaseRefundCandidates" resultType="com.platform.parent.mybatis.bean.GroupPurchaseRefund">
+        SELECT grouppurchasepayment.openid, grouppurchasepayment.transaction_id, grouppurchasepayment.cash_fee,
+        datediff(now(), grouppurchase_view.realdeadline) AS expired_days
+        FROM grouppurchasemember
+        JOIN grouppurchase_view on grouppurchase_view.id = grouppurchasemember.groupId AND grouppurchase_view.status = 3
+        JOIN grouppurchasepayment on grouppurchasepayment.openid = grouppurchasemember.openid
+             AND grouppurchasepayment.out_trade_no = grouppurchasemember.outTradeNo
+        AND grouppurchasepayment.transaction_id NOT IN
+        (select transaction_id from grouppurchaserefund);
+    </select>
+
+    <select id="findAdminMember" parameterType="java.lang.String" resultType="int">
+        SELECT count(*) from adminmember where unionid = #{unionid};
+    </select>
+
+    <select id="findAdminMemberById" parameterType="long" resultType="com.platform.parent.mybatis.bean.AdminMember">
+        SELECT * from adminmember where id = #{id};
+    </select>
+
+    <delete id="deleteAdminMember" parameterType="com.platform.parent.mybatis.bean.AdminMember" >
+        DELETE FROM adminmember WHERE id = #{id};
+    </delete>
+
+    <insert id="addAdminMember" parameterType="com.platform.parent.mybatis.bean.AdminMember" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO adminmember (openid, unionid, nickname, headimgurl, created)
+        VALUES (#{openid}, #{unionid}, #{nickname}, #{headimgurl}, #{created})
+    </insert>
+
+    <select id="findAdminMembers" parameterType="long" resultType="com.platform.parent.mybatis.bean.AdminMember">
+        SELECT * FROM adminmember
+    </select>
+
+    <select id="findAdminCandidateById" parameterType="long" resultType="com.platform.parent.mybatis.bean.AdminMember">
+        SELECT * from admincandidate where id = #{id};
+    </select>
+
+    <delete id="deleteAdminCandidate" parameterType="com.platform.parent.mybatis.bean.AdminMember" >
+        DELETE FROM admincandidate WHERE id = #{id};
+    </delete>
+
+    <insert id="addAdminCandidate" parameterType="com.platform.parent.mybatis.bean.AdminMember" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO admincandidate (openid, unionid, nickname, headimgurl, created)
+        VALUES (#{openid}, #{unionid}, #{nickname}, #{headimgurl}, #{created})
+    </insert>
+
+    <select id="findAdminCandidates" resultType="com.platform.parent.mybatis.bean.AdminMember">
+        SELECT * FROM admincandidate
+    </select>
+
+    <insert id="addGroupPurchaseBookInfo" parameterType="com.platform.parent.request.course.GroupPurchaseBookInfo" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO groupbookinfo (openid, nickname, childname, childage, childgrade, phone,
+                                          courseid, groupid)
+        VALUES (#{openid}, #{nickname}, #{childname}, #{childage}, #{childgrade}, #{phone},
+                #{courseid}, #{groupid})
+    </insert>
+
+    <select id="getOpenId" resultType="java.lang.String">
+        SELECT openid FROM grouppurchasepayment where out_trade_no = #{param} limit 1
+    </select>
+
+    <update id="updateGroupMember">
+        UPDATE grouppurchasemember
+        SET nickname   = #{nickname}
+        WHERE groupid = #{groupid} and openid = #{openid}
+    </update>
+
+    <update id="updateMemberByUserInfo">
+        UPDATE grouppurchasemember
+        SET nickname   = #{nickname} ,headimgurl = #{headimgurl},unionid = #{unionid}
+        WHERE openid = #{openid}
+    </update>
+
+    <select id="getH5PaymentCount" resultType="java.lang.Integer">
+        SELECT count(1) FROM grouppurchasepayment where openid = #{openid} and trade_type='MWEB'
+    </select>
+    <select id="findGroupPurchaseByUnionidAndCourseId" parameterType="java.lang.String" resultType="com.platform.parent.mybatis.bean.GroupPurchase">
+        SELECT  *
+        FROM  grouppurchase_view
+        JOIN grouppurchasemember on grouppurchasemember.groupId = grouppurchase_view.id
+        WHERE grouppurchasemember.unionid = #{unionId} and grouppurchase_view.courseId = #{courseId}
+    </select>
+</mapper>
